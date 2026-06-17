@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Família Coelho" />
-  <title>Família Coelho 💰</title>
+  <title>Família Coelho</title>
   <link rel="manifest" href="./manifest.json" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
@@ -366,13 +366,32 @@
 
     /* Scrollbar hide */
     .tabs::-webkit-scrollbar { display: none; }
+    /* ===== BOTÃO FLUTUANTE ===== */
+    .fab {
+      position: fixed;
+      bottom: calc(var(--nav-h) + 16px);
+      right: 20px;
+      width: 56px; height: 56px;
+      background: var(--blue);
+      color: #fff;
+      border: none; border-radius: 50%;
+      font-size: 28px; font-weight: 300;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(59,130,246,0.45);
+      display: none;
+      align-items: center; justify-content: center;
+      z-index: 150;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .fab:active { transform: scale(.93); box-shadow: 0 2px 8px rgba(59,130,246,0.3); }
+    .fab.visible { display: flex; }
   </style>
 </head>
 <body>
 
 <!-- HEADER -->
 <div class="header">
-  <div class="header-title">Família <span>Coelho</span> 💰</div>
+  <div class="header-title">Família <span>Coelho</span></div>
   <div class="month-nav">
     <button onclick="mudarMes(-1)">‹</button>
     <div class="month-label" id="monthLabel"></div>
@@ -393,7 +412,7 @@
   <!-- PAGE: CONTAS -->
   <div class="page" id="page-contas">
     <div class="section-header">
-      <div class="section-title">💳 Contas a Pagar</div>
+      <div class="section-title">Contas a Pagar</div>
       <button class="btn-add" onclick="abrirModal('conta')">+ Nova</button>
     </div>
     <div class="tabs">
@@ -410,7 +429,7 @@
   <!-- PAGE: ENTRADAS/SAÍDAS -->
   <div class="page" id="page-lancamentos">
     <div class="section-header">
-      <div class="section-title">💸 Lançamentos</div>
+      <div class="section-title">Lançamentos</div>
       <button class="btn-add" onclick="abrirModal('lancamento')">+ Novo</button>
     </div>
     <div class="tabs">
@@ -435,16 +454,16 @@
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
   <button class="nav-item active" onclick="showPage('home', this)">
-    <span class="icon">🏠</span>Dashboard
+    <span class="icon">⌂</span>Dashboard
   </button>
   <button class="nav-item" onclick="showPage('contas', this)">
-    <span class="icon">💳</span>Contas
+    <span class="icon">≡</span>Contas
   </button>
   <button class="nav-item" onclick="showPage('lancamentos', this)">
-    <span class="icon">💸</span>Lançamentos
+    <span class="icon">±</span>Lançamentos
   </button>
   <button class="nav-item" onclick="showPage('analise', this)">
-    <span class="icon">📊</span>Análise
+    <span class="icon">◑</span>Análise
   </button>
 </nav>
 
@@ -591,6 +610,10 @@
   </div>
 </div>
 
+
+<!-- BOTÃO FLUTUANTE -->
+<button class="fab" id="fab-btn" onclick="abrirModal('lancamento')">+</button>
+
 <!-- FIREBASE -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -637,6 +660,9 @@
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + page).classList.add('active');
     el.classList.add('active');
+    // Mostrar FAB apenas no dashboard
+    const fab = document.getElementById('fab-btn');
+    if (fab) fab.classList.toggle('visible', page === 'home');
     renderizarTudo();
   };
 
@@ -1191,6 +1217,9 @@
   // ===== INIT =====
   atualizarLabel();
   carregarDados();
+  // Mostrar FAB na tela inicial
+  const fab = document.getElementById('fab-btn');
+  if (fab) fab.classList.add('visible');
 
   // Fechar modal clicando fora
   document.querySelectorAll('.modal-overlay').forEach(el => {
