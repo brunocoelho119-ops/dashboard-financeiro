@@ -1,13 +1,18 @@
-const CACHE_NAME = 'familia-coelho-v1';
+const CACHE_NAME = 'familia-coelho-v2';
+const BASE = '/dashboard-financeiro/';
 const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json'
+  BASE,
+  BASE + 'index.html',
+  BASE + 'manifest.json',
+  BASE + 'icon-192.png',
+  BASE + 'icon-512.png'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(urlsToCache).catch(() => {});
+    })
   );
   self.skipWaiting();
 });
@@ -23,8 +28,8 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   event.respondWith(
-    fetch(event.request).catch(() =>
-      caches.match(event.request).then(r => r || caches.match('./index.html'))
-    )
+    caches.match(event.request).then(cached => {
+      return cached || fetch(event.request).catch(() => caches.match(BASE + 'index.html'));
+    })
   );
 });

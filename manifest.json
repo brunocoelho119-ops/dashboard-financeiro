@@ -1,22 +1,23 @@
 {
-  "name": "Família Coelho - Financeiro",
+  "name": "Família Coelho",
   "short_name": "Fam. Coelho",
   "description": "Dashboard financeiro da Família Coelho",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "/dashboard-financeiro/index.html",
+  "scope": "/dashboard-financeiro/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3b82f6",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
+  "lang": "pt-BR",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "/dashboard-financeiro/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icon-512.png",
+      "src": "/dashboard-financeiro/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
