@@ -720,10 +720,13 @@
     await signOut(auth);
   };
 
+  // Interruptor temporário: coloque true de novo quando terminar de ajustar o login.
+  const LOGIN_ATIVO = false;
+
   onAuthStateChanged(auth, (user) => {
     const tela = document.getElementById('tela-login');
     const appRoot = document.getElementById('app-root');
-    if (user) {
+    if (!LOGIN_ATIVO || user) {
       tela.classList.remove('open');
       appRoot.style.display = 'block';
       iniciarApp();
