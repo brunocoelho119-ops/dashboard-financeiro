@@ -650,7 +650,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, set, push, get, remove, update, onValue }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-  import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut }
+  import { getAuth, signInWithEmailAndPassword, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const firebaseConfig = {
@@ -699,17 +699,20 @@
   });
 
   window.fazerLoginGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    await signInWithRedirect(auth, provider);
+    // a página recarrega e volta pro Google; o resultado é tratado abaixo, no getRedirectResult
+  };
+
+  // Trata o retorno do login por redirect (roda uma vez, quando a página volta do Google)
+  getRedirectResult(auth).catch((e) => {
+    console.error('Erro login Google (redirect):', e);
     const erroEl = document.getElementById('login-erro');
-    erroEl.style.display = 'none';
-    try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    } catch (e) {
-      console.error('Erro login Google:', e);
+    if (erroEl) {
       erroEl.textContent = 'Erro: ' + (e.code || e.message);
       erroEl.style.display = 'block';
     }
-  };
+  });
 
   window.fazerLogout = async () => {
     if (!confirm('Sair da conta?')) return;
