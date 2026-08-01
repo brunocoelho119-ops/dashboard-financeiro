@@ -705,7 +705,8 @@
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
     } catch (e) {
-      erroEl.textContent = 'Não foi possível entrar com o Google.';
+      console.error('Erro login Google:', e);
+      erroEl.textContent = 'Erro: ' + (e.code || e.message);
       erroEl.style.display = 'block';
     }
   };
