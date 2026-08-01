@@ -745,6 +745,7 @@
   let filtroLanc = 'todos';
   let dadosContas = {};
   let dadosLanc = {};
+  let saldoGlobal = { disponivel: 0, pct: 0 };
 
   const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -1047,13 +1048,47 @@
 
   // ===== CARREGAR DADOS =====
   async function carregarDados() {
-    const [snapContas, snapLanc] = await Promise.all([
+    const [snapContas, snapLanc, snapContasTudo, snapLancTudo] = await Promise.all([
       get(ref(db, `contas/${anoAtual}/${mesAtual}`)),
-      get(ref(db, `lancamentos/${anoAtual}/${mesAtual}`))
+      get(ref(db, `lancamentos/${anoAtual}/${mesAtual}`)),
+      get(ref(db, 'contas')),
+      get(ref(db, 'lancamentos'))
     ]);
     dadosContas = snapContas.exists() ? snapContas.val() : {};
     dadosLanc = snapLanc.exists() ? snapLanc.val() : {};
+    saldoGlobal = calcularSaldoGlobal(
+      snapContasTudo.exists() ? snapContasTudo.val() : {},
+      snapLancTudo.exists() ? snapLancTudo.val() : {}
+    );
     renderizarTudo();
+  }
+
+  // Percorre contas/{ano}/{mes}/{id} e lancamentos/{ano}/{mes}/{id} de TODOS os meses
+  // e soma tudo, pra dar o saldo total acumulado (não só do mês em exibição).
+  function calcularSaldoGlobal(todasContas, todosLancs) {
+    let totalEntradas = 0, totalSaidas = 0, totalPago = 0, totalPendente = 0, totalContas = 0;
+
+    Object.values(todosLancs || {}).forEach(mesesDoAno => {
+      Object.values(mesesDoAno || {}).forEach(lancsDoMes => {
+        Object.values(lancsDoMes || {}).forEach(l => {
+          if (l.tipo === 'entrada') totalEntradas += l.valor;
+          if (l.tipo === 'saida') totalSaidas += l.valor;
+        });
+      });
+    });
+
+    Object.values(todasContas || {}).forEach(mesesDoAno => {
+      Object.values(mesesDoAno || {}).forEach(contasDoMes => {
+        Object.values(contasDoMes || {}).forEach(c => {
+          totalContas += c.valor;
+          if (c.pago) totalPago += c.valor; else totalPendente += c.valor;
+        });
+      });
+    });
+
+    const disponivel = (totalEntradas - totalSaidas - totalPago) - totalPendente;
+    const pct = totalContas > 0 ? Math.min(100, (totalPago / totalContas) * 100) : 0;
+    return { disponivel, pct };
   }
 
   // ===== RENDERIZAR =====
@@ -1081,8 +1116,8 @@
     const atrasadas = contas.filter(([,c]) => getStatus(c) === 'atrasado');
     const proximas = contas.filter(([,c]) => getStatus(c) === 'proximo');
     const saldo = totalEntradas - totalSaidas - totalPago;
-    const disponivel = saldo - totalPendente;
-    const pct = totalContas > 0 ? Math.min(100, (totalPago / totalContas) * 100) : 0;
+    const disponivel = saldoGlobal.disponivel; // acumulado de todos os meses
+    const pct = saldoGlobal.pct; // % de contas pagas, também acumulado
 
     let html = '';
 
