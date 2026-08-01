@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familia-coelho-v2';
+const CACHE_NAME = 'familia-coelho-v3';
 const BASE = '/dashboard-financeiro/';
 const urlsToCache = [
   BASE,
