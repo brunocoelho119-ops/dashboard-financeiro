@@ -389,6 +389,34 @@
 </head>
 <body>
 
+<!-- TELA DE LOGIN -->
+<div class="modal-overlay open" id="tela-login" style="align-items:center;background:var(--bg)">
+  <div class="modal" style="border-radius:24px;max-width:340px">
+    <div class="modal-title">🐇 Família Coelho</div>
+    <div class="form-group">
+      <label class="form-label">E-mail</label>
+      <input class="form-input" id="login-email" type="email" placeholder="seuemail@exemplo.com" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Senha</label>
+      <input class="form-input" id="login-senha" type="password" placeholder="••••••••" />
+    </div>
+    <div id="login-erro" style="color:var(--red);font-size:13px;margin-bottom:10px;display:none"></div>
+    <button class="btn-salvar" id="login-btn" onclick="fazerLogin()">Entrar</button>
+
+    <div style="text-align:center;color:var(--text2);font-size:12px;margin:14px 0">ou</div>
+
+    <button class="btn-salvar" id="login-google-btn" onclick="fazerLoginGoogle()"
+      style="background:#fff;color:var(--text);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;gap:10px">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.98A9 9 0 0 0 0 9c0 1.45.35 2.83.98 4.03l2.97-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+      Entrar com Google
+    </button>
+  </div>
+</div>
+
+<!-- APP (fica escondido até logar) -->
+<div id="app-root" style="display:none">
+
 <!-- HEADER -->
 <div class="header">
   <div class="header-title">Família <span>Coelho</span></div>
@@ -396,6 +424,7 @@
     <button onclick="mudarMes(-1)">‹</button>
     <div class="month-label" id="monthLabel"></div>
     <button onclick="mudarMes(1)">›</button>
+    <button onclick="fazerLogout()" title="Sair" style="font-size:16px">🚪</button>
   </div>
 </div>
 
@@ -614,11 +643,15 @@
 <!-- BOTÃO FLUTUANTE -->
 <button class="fab" id="fab-btn" onclick="abrirModal('lancamento')">+</button>
 
+</div> <!-- fim app-root -->
+
 <!-- FIREBASE -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, set, push, get, remove, update, onValue }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAS0SbhQtSb6U7yHmKG34UGdZpL7hDzk-8",
@@ -632,6 +665,68 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+  const auth = getAuth(app);
+
+  // ===== LOGIN =====
+  window.fazerLogin = async () => {
+    const email = document.getElementById('login-email').value.trim();
+    const senha = document.getElementById('login-senha').value;
+    const erroEl = document.getElementById('login-erro');
+    const btn = document.getElementById('login-btn');
+    erroEl.style.display = 'none';
+    if (!email || !senha) {
+      erroEl.textContent = 'Preencha e-mail e senha.';
+      erroEl.style.display = 'block';
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Entrando...';
+    try {
+      await signInWithEmailAndPassword(auth, email, senha);
+    } catch (e) {
+      erroEl.textContent = 'E-mail ou senha inválidos.';
+      erroEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Entrar';
+    }
+  };
+
+  // Permite logar apertando Enter no campo de senha
+  document.addEventListener('DOMContentLoaded', () => {
+    const senhaEl = document.getElementById('login-senha');
+    if (senhaEl) senhaEl.addEventListener('keydown', e => { if (e.key === 'Enter') fazerLogin(); });
+  });
+
+  window.fazerLoginGoogle = async () => {
+    const erroEl = document.getElementById('login-erro');
+    erroEl.style.display = 'none';
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch (e) {
+      erroEl.textContent = 'Não foi possível entrar com o Google.';
+      erroEl.style.display = 'block';
+    }
+  };
+
+  window.fazerLogout = async () => {
+    if (!confirm('Sair da conta?')) return;
+    await signOut(auth);
+  };
+
+  onAuthStateChanged(auth, (user) => {
+    const tela = document.getElementById('tela-login');
+    const appRoot = document.getElementById('app-root');
+    if (user) {
+      tela.classList.remove('open');
+      appRoot.style.display = 'block';
+      iniciarApp();
+    } else {
+      tela.classList.add('open');
+      appRoot.style.display = 'none';
+    }
+  });
 
   // ===== ESTADO =====
   let mesAtual = new Date().getMonth();
@@ -652,7 +747,7 @@
     if (mesAtual > 11) { mesAtual = 0; anoAtual++; }
     if (mesAtual < 0) { mesAtual = 11; anoAtual--; }
     atualizarLabel();
-    renderizarTudo();
+    carregarDados(); // <-- era só renderizarTudo(); por isso não recarregava os dados do mês novo
   };
 
   window.showPage = (page, el) => {
@@ -1214,21 +1309,27 @@
     document.getElementById('analise-content').innerHTML = html;
   }
 
-  // ===== INIT =====
-  atualizarLabel();
-  carregarDados();
-  // Mostrar FAB na tela inicial
-  const fab = document.getElementById('fab-btn');
-  if (fab) fab.classList.add('visible');
+  // ===== INIT (roda só depois do login) =====
+  let appJaIniciado = false;
+  function iniciarApp() {
+    if (appJaIniciado) return; // evita reiniciar tudo se o Firebase disparar onAuthStateChanged de novo
+    appJaIniciado = true;
 
-  // Fechar modal clicando fora
-  document.querySelectorAll('.modal-overlay').forEach(el => {
-    el.addEventListener('click', (e) => {
-      if (e.target === el) {
-        el.classList.remove('open');
-      }
+    atualizarLabel();
+    carregarDados();
+    // Mostrar FAB na tela inicial
+    const fab = document.getElementById('fab-btn');
+    if (fab) fab.classList.add('visible');
+
+    // Fechar modal clicando fora (só os modais do app, não a tela de login)
+    document.querySelectorAll('#app-root .modal-overlay').forEach(el => {
+      el.addEventListener('click', (e) => {
+        if (e.target === el) {
+          el.classList.remove('open');
+        }
+      });
     });
-  });
+  }
 </script>
 <script>
   if ('serviceWorker' in navigator) {
