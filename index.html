@@ -684,7 +684,8 @@
     try {
       await signInWithEmailAndPassword(auth, email, senha);
     } catch (e) {
-      erroEl.textContent = 'E-mail ou senha inválidos.';
+      console.error('Erro login e-mail/senha:', e);
+      erroEl.textContent = 'Erro: ' + (e.code || e.message);
       erroEl.style.display = 'block';
     } finally {
       btn.disabled = false;
